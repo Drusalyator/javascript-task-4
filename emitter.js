@@ -11,6 +11,21 @@ const isStar = true;
  * @returns {Object}
  */
 function getEmitter() {
+
+    /**
+     * Добавляет новый eventObject
+     * @param {String} event - Событие
+     * @param {Object} eventObject - Объект события
+     * @param {Map} eventsMap - Хранилище событиый
+     */
+    function addEventObject(event, eventObject, eventsMap) {
+        if (!eventsMap.has(event)) {
+            eventsMap.set(event, []);
+        }
+
+        eventsMap.get(event).push(eventObject);
+    }
+
     return {
         events: new Map(),
 
@@ -22,12 +37,14 @@ function getEmitter() {
          * @returns {this}
          */
         on: function (event, context, handler) {
-            if (!this.events.has(event)) {
-                this.events.set(event, []);
-            }
+            const eventObject = {
+                context,
+                handler,
+                repeat: Infinity,
+                frequency: 1,
+                step: 0 };
 
-            this.events.get(event)
-                .push({ context, handler, repeat: Infinity, frequency: 1, step: 0 });
+            addEventObject(event, eventObject, this.events);
 
             return this;
         },
@@ -85,14 +102,14 @@ function getEmitter() {
          * @returns {this}
          */
         several: function (event, context, handler, times) {
-            if (!this.events.has(event)) {
-                this.events.set(event, []);
-            }
+            const eventObject = {
+                context,
+                handler,
+                repeat: times <= 0 ? Infinity : times,
+                frequency: 1,
+                step: 0 };
 
-            const repeat = times <= 0 ? Infinity : times;
-
-            this.events.get(event)
-                .push({ context, handler, repeat, frequency: 1, step: 0 });
+            addEventObject(event, eventObject, this.events);
 
             return this;
         },
@@ -107,14 +124,14 @@ function getEmitter() {
          * @returns {this}
          */
         through: function (event, context, handler, frequency) {
-            if (!this.events.has(event)) {
-                this.events.set(event, []);
-            }
+            const eventObject = {
+                context,
+                handler,
+                repeat: Infinity,
+                frequency: frequency <= 0 ? 1 : frequency,
+                step: 0 };
 
-            const freq = frequency <= 0 ? 1 : frequency;
-
-            this.events.get(event)
-                .push({ context, handler, repeat: Infinity, frequency: freq, step: 0 });
+            addEventObject(event, eventObject, this.events);
 
             return this;
         }
