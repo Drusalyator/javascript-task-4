@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-const isStar = true;
+const isStar = false;
 
 /**
  * Возвращает новый emitter
@@ -12,32 +12,62 @@ const isStar = true;
  */
 function getEmitter() {
     return {
+        events: new Map(),
 
         /**
          * Подписаться на событие
          * @param {String} event
          * @param {Object} context
          * @param {Function} handler
+         * @returns {this}
          */
         on: function (event, context, handler) {
-            console.info(event, context, handler);
+            if (!this.events.has(event)) {
+                this.events.set(event, []);
+            }
+
+            this.events.get(event).push({ context, handler });
+
+            return this;
         },
 
         /**
          * Отписаться от события
          * @param {String} event
          * @param {Object} context
+         * @returns {this}
          */
         off: function (event, context) {
-            console.info(event, context);
+            [...this.events.keys()]
+                .filter(eventName => eventName === event || eventName.startsWith(`${event}.`))
+                .forEach(eventName => {
+                    this.events.get(eventName).forEach((eventObject, index) => {
+                        if (eventObject.context === context) {
+                            this.events.get(eventName).splice(index, 1);
+                        }
+                    });
+                });
+
+            return this;
         },
 
         /**
          * Уведомить о событии
          * @param {String} event
+         * @returns {this}
          */
         emit: function (event) {
-            console.info(event);
+            [...this.events.keys()]
+                .filter(eventName => eventName === event || event.startsWith(`${eventName}.`))
+                .sort((eventName1, eventName2) => eventName1.localeCompare(eventName2))
+                .reverse()
+                .forEach(eventName => {
+                    this.events.get(eventName).forEach(eventObject => {
+                        eventObject.handler.call(eventObject.context);
+                    });
+                });
+
+            return this;
         },
 
         /**
