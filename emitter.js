@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-const isStar = false;
+const isStar = true;
 
 /**
  * Возвращает новый emitter
@@ -26,7 +26,8 @@ function getEmitter() {
                 this.events.set(event, []);
             }
 
-            this.events.get(event).push({ context, handler });
+            this.events.get(event)
+                .push({ context, handler, repeat: Infinity, frequency: 1, step: 0 });
 
             return this;
         },
@@ -63,7 +64,11 @@ function getEmitter() {
                 .reverse()
                 .forEach(eventName => {
                     this.events.get(eventName).forEach(eventObject => {
-                        eventObject.handler.call(eventObject.context);
+                        if (eventObject.repeat > eventObject.step &&
+                            eventObject.step % eventObject.frequency === 0) {
+                            eventObject.handler.call(eventObject.context);
+                        }
+                        eventObject.step++;
                     });
                 });
 
@@ -77,9 +82,19 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} times – сколько раз получить уведомление
+         * @returns {this}
          */
         several: function (event, context, handler, times) {
-            console.info(event, context, handler, times);
+            if (!this.events.has(event)) {
+                this.events.set(event, []);
+            }
+
+            const repeat = times <= 0 ? Infinity : times;
+
+            this.events.get(event)
+                .push({ context, handler, repeat, frequency: 1, step: 0 });
+
+            return this;
         },
 
         /**
@@ -89,9 +104,19 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} frequency – как часто уведомлять
+         * @returns {this}
          */
         through: function (event, context, handler, frequency) {
-            console.info(event, context, handler, frequency);
+            if (!this.events.has(event)) {
+                this.events.set(event, []);
+            }
+
+            const freq = frequency <= 0 ? 1 : frequency;
+
+            this.events.get(event)
+                .push({ context, handler, repeat: Infinity, frequency: freq, step: 0 });
+
+            return this;
         }
     };
 }
